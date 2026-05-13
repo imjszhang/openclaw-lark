@@ -18,7 +18,7 @@ import type {
   ChannelMessageActionName,
   OpenClawConfig,
 } from 'openclaw/plugin-sdk';
-import type { ChannelThreadingToolContext } from 'openclaw/plugin-sdk/channel-contract';
+import type { ChannelMessageToolSchemaContribution, ChannelThreadingToolContext } from 'openclaw/plugin-sdk/channel-contract';
 import { extractToolSend } from 'openclaw/plugin-sdk/tool-send';
 import { readStringParam } from 'openclaw/plugin-sdk/param-readers';
 import { jsonResult, readReactionParams } from '../../core/sdk-compat';
@@ -31,6 +31,17 @@ import { sendCardLark, sendTextLark } from './deliver';
 import { uploadAndSendMediaLark } from './media';
 
 const log = larkLogger('outbound/actions');
+
+const FEISHU_SEND_TEXT_DESCRIPTION =
+  'Text to send as a separate Feishu message. During a normal Feishu streaming-card reply, do not call send just to repeat or finalize the same answer; return the final answer normally so the active card can be completed by the reply dispatcher. Use send only when the user explicitly needs an additional separate message.';
+
+const FEISHU_MESSAGE_TOOL_SCHEMA = {
+  properties: {
+    message: { type: 'string', description: FEISHU_SEND_TEXT_DESCRIPTION },
+    text: { type: 'string', description: FEISHU_SEND_TEXT_DESCRIPTION },
+  },
+  visibility: 'current-channel' as const,
+} as unknown as ChannelMessageToolSchemaContribution;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -170,7 +181,7 @@ export const feishuMessageActions: ChannelMessageActionAdapter = {
     return {
       actions: Array.from(SUPPORTED_ACTIONS),
       capabilities: ['cards'],
-      schema: null,
+      schema: FEISHU_MESSAGE_TOOL_SCHEMA,
     };
   },
 
